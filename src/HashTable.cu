@@ -85,8 +85,10 @@ namespace cuANN {
 	}
 
 	void HashTable::generateProjection(curandGenerator_t* normalGen, curandGenerator_t* uniformGen) {
+		std::cout << "allocating proj on device. params k: " << k << " d: " << d << std::endl;
 		ThrustFloatV dProjections(k * d);
 		ThrustFloatV dOffsetVector(k);
+
 
 		curandGenerateNormal(*normalGen, thrust::raw_pointer_cast(dProjections.data()), k * d, 0, 1);
 		curandGenerateUniform(*uniformGen, thrust::raw_pointer_cast(dOffsetVector.data()), k);

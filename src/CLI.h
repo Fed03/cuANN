@@ -21,6 +21,7 @@ namespace cuANN {
 		argagg::parser getParser();
 		bool checkArgs(argagg::parser_results *args);
 		Dataset * getDataset(std::string filePath);
+		Dataset * getDataset(std::string filePath, int howMany);
 	};
 }
 

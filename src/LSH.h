@@ -1,8 +1,10 @@
 #ifndef __cuANN_LSH_H_
 #define __cuANN_LSH_H_
 
+#include <vector>
 #include "Dataset.h"
 #include "Index.h"
+#include "QueryResult.h"
 
 namespace cuANN {
 	class LSH
@@ -14,7 +16,7 @@ namespace cuANN {
 
 		void buildIndex();
 
-		void query(Dataset* queries, unsigned numberOfNeighbors);
+		std::vector<QueryResult> query(Dataset* queries, unsigned numberOfNeighbors);
 
 	private:
 		Dataset * dataset;

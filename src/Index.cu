@@ -32,7 +32,7 @@ namespace cuANN {
 		this->d = data->d;
 		this->N = data->N;
 		this->tables.resize(this->L);
-
+		std::cout << "refreshing data" << std::endl;
 		try
 		{
 			allocateProjectionMemory();
@@ -42,7 +42,7 @@ namespace cuANN {
 			std::cerr << e.what();
 			return false;
 		}
-
+		std::cout << "generating proj" << std::endl;
 		generateRandomProjections();
 
 		return true;
@@ -185,8 +185,6 @@ namespace cuANN {
 		curandGenerator_t uniform;
 		curandGenerator_t normal;
 
-		/*CURAND_CALL(curandCreateGenerator(&uniform, CURAND_RNG_PSEUDO_DEFAULT));
-		CURAND_CALL(curandCreateGenerator(&normal, CURAND_RNG_PSEUDO_DEFAULT));*/
 		curandCreateGenerator(&uniform, CURAND_RNG_PSEUDO_DEFAULT);
 		curandCreateGenerator(&normal, CURAND_RNG_PSEUDO_DEFAULT);
 

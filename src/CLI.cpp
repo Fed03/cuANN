@@ -35,8 +35,12 @@ namespace cuANN {
 		try
 		{
 			Dataset * dataset = getDataset(args["dataset"]);
+			Dataset * queries = getDataset(args["queries"], args["numberOfQueries"]);
+
 			LSH lsh(args["hashFunc"], args["tables"], args["binWidth"], dataset);
-			delete dataset;
+			lsh.buildIndex();
+			auto result = lsh.query(queries, args["neighbors"]);
+			std::cout << "arrivato";
 		}
 		catch (const std::exception& e )
 		{
@@ -75,6 +79,12 @@ namespace cuANN {
 	{
 		auto f = new FvecsReader(filePath);
 		return f->readAllVectors();
+	}
+
+	Dataset * CLI::getDataset(std::string filePath, int howMany)
+	{
+		auto f = new FvecsReader(filePath);
+		return f->readVectors(howMany);
 	}
 }
 
