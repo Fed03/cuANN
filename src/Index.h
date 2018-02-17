@@ -3,6 +3,9 @@
 
 #include "HashTable.h"
 #include "Dataset.h"
+#include <vector>
+#include "ThrustQueryResult.h"
+#include "QueryResult.h"
 
 namespace cuANN {
 	class Index
@@ -16,7 +19,7 @@ namespace cuANN {
 
 		bool buildIndex();
 
-		void query(Dataset* queries, unsigned numberOfNeighbors);
+		std::vector<QueryResult> query(Dataset* queries, unsigned numberOfNeighbors);
 
 	private:
 		Dataset * dataset;
@@ -33,6 +36,14 @@ namespace cuANN {
 		void generateRandomProjections();
 
 		void freeProjectionMemory();
+
+		void sortDistancesAndTheirIdxs(ThrustFloatV& dDistances, ThrustUnsignedV& dCandidatesIdxs, const ThrustQueryResult* mergedResult);
+
+		ThrustFloatV calculateDistances(const float* queries, unsigned Q, const ThrustUnsignedV& dCandidatesIdxs, const ThrustQueryResult* result);
+
+		ThrustQueryResult* mergeQueryResults(thrust::host_vector<ThrustQueryResult*>& results, unsigned Q);
+
+		unsigned getMaxCandidatesNumber(thrust::host_vector<ThrustQueryResult*>& results);
 	};
 }
 

@@ -53,6 +53,16 @@ namespace cuANN {
 		const float* binCodes,
 		int Q, int k, int binsNumber
 	);
+
+	__global__ void calcSquaredDistances(
+		const float* A, int rowsA,
+		const float* B, int rowsB,
+		int cols,
+		const unsigned* rowIdxsA,
+		const unsigned* rowIdxsB,
+		unsigned distancesNumber,
+		float* result
+	);
 }
 
 

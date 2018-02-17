@@ -4,6 +4,7 @@
 #include <cublas_v2.h>
 #include <stdexcept>
 #include <thrust/gather.h>
+#include "commons.h"
 #include "utils.h"
 
 namespace cuANN {
@@ -141,6 +142,46 @@ namespace cuANN {
 			if (!isValidIdx) {
 				binIdxsCandidates[queryId] = -1;
 			}
+		}
+	}
+
+	__global__ void calcSquaredDistances(
+		const float* A, int rowsA,
+		const float* B, int rowsB,
+		int cols,
+		const unsigned* rowIdxsA,
+		const unsigned* rowIdxsB,
+		unsigned distancesNumber,
+		float* result
+	) {
+		__shared__ float distances[BLOCK_SIZE_STRIDE_X][BLOCK_SIZE_STRIDE_Y];
+
+		int distanceIdx = blockDim.x * blockIdx.x + threadIdx.x;
+		if (distanceIdx < distancesNumber) {
+			int ARowIdx = rowIdxsA[distanceIdx];
+			int BRowIdx = rowIdxsB[distanceIdx];
+
+			float distance = 0.0;
+			for (int strideIdx = threadIdx.y; strideIdx < cols; strideIdx += BLOCK_SIZE_STRIDE_Y) {
+				distance += powf(A[strideIdx * rowsA + ARowIdx] - B[strideIdx * rowsB + BRowIdx], 2);
+			}
+
+			distances[threadIdx.x][threadIdx.y] = distance;
+		}
+		__syncthreads();
+
+		if (threadIdx.y < 4) {
+			distances[threadIdx.x][threadIdx.y] += distances[threadIdx.x][threadIdx.y + 4];
+		}
+		__syncthreads();
+
+		if (threadIdx.y < 2) {
+			distances[threadIdx.x][threadIdx.y] += distances[threadIdx.x][threadIdx.y + 2];
+		}
+		__syncthreads();
+
+		if (threadIdx.y == 0) {
+			result[distanceIdx] = distances[threadIdx.x][0] + distances[threadIdx.x][1];
 		}
 	}
 }

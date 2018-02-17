@@ -105,7 +105,7 @@ namespace cuANN {
 		calcBins(dProjectedMatrix);
 	}
 
-	TableQueryResult* HashTable::query(const float* queries, const int Q) {
+	ThrustQueryResult* HashTable::query(const float* queries, const int Q) {
 		ThrustFloatV dProjectedQueries(Q * k);
 		projectMatrix(queries, Q, dProjectedQueries);
 
@@ -138,7 +138,7 @@ namespace cuANN {
 			}
 		}
 
-		return new TableQueryResult(
+		return new ThrustQueryResult(
 			resultIdxsForQueriesStartingIdxs,
 			resultIdxsForQueriesSizes,
 			resultIdxsForQueries,

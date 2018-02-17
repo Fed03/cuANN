@@ -4,6 +4,8 @@
 #include <thrust/device_vector.h>
 
 #define BLOCK_SIZE 16
+#define BLOCK_SIZE_STRIDE_Y 8
+#define BLOCK_SIZE_STRIDE_X 32
 
 typedef thrust::device_vector<float> ThrustFloatV;
 typedef thrust::device_vector<unsigned> ThrustUnsignedV;

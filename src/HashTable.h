@@ -3,7 +3,7 @@
 
 #include <curand.h>
 #include "commons.h"
-#include "TableQueryResult.h"
+#include "ThrustQueryResult.h"
 
 namespace cuANN {
 	class HashTable
@@ -21,7 +21,7 @@ namespace cuANN {
 
 		void hashDataset(const float* dataset, const int N);
 
-		TableQueryResult* query(const float* queries, const int Q);
+		ThrustQueryResult* query(const float* queries, const int Q);
 
 	private:
 		int k;

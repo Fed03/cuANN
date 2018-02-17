@@ -2,8 +2,8 @@
 #define __cuANN_Index__
 
 #include "commons.h"
+#include "utils.h"
 #include "Index.h"
-#include "TableQueryResult.h"
 
 namespace cuANN {
 	Index::Index(int k, int L, Dataset * data, float w) {
@@ -55,21 +55,88 @@ namespace cuANN {
 		return true;
 	}
 
-	void Index::query(Dataset* queries, unsigned numberOfNeighbors) {
+	std::vector<QueryResult> Index::query(Dataset* queries, unsigned numberOfNeighbors) {
 		unsigned Q = queries->N;
-		std::vector<TableQueryResult*> results;
+		thrust::host_vector<ThrustQueryResult*> results;
 		results.resize(L);
 
-		unsigned totalCandidatesNumber = 0;
 		for (const auto& table : tables) {
-			TableQueryResult* result = table->query(queries->dataset, Q);
-			totalCandidatesNumber += result->resultSetSize;
-			results.push_back(result);
+			results.push_back(table->query(queries->dataset, Q));
 		}
+
+		auto mergedResult = mergeQueryResults(results, Q);
+
+		ThrustUnsignedV dCandidatesIdxs(mergedResult->resultSet);
+		auto dDistances = calculateDistances(queries->dataset, Q, dCandidatesIdxs, mergedResult);
+		sortDistancesAndTheirIdxs(dDistances, dCandidatesIdxs, mergedResult);
+
+		std::vector<QueryResult> finalResult;
+		for (unsigned query = 0; query < Q; ++query) {
+			std::vector<unsigned> resultIdxsForQuery;
+			thrust::copy_n(
+				dCandidatesIdxs.begin() + mergedResult->resultStartingIdxs[query],
+				std::min(numberOfNeighbors, mergedResult->resultSizes[query]),
+				resultIdxsForQuery.begin()
+			);
+			finalResult.emplace_back(query, std::move(resultIdxsForQuery));
+		}
+
+		return finalResult;
+	}
+
+	void Index::sortDistancesAndTheirIdxs(ThrustFloatV& dDistances, ThrustUnsignedV& dCandidatesIdxs, const ThrustQueryResult* mergedResult) {
+		ThrustUnsignedV dCandidatesStartingIdxs(mergedResult->resultStartingIdxs);
+		ThrustUnsignedV dCandidatesSizes(mergedResult->resultSizes);
+
+		unsigned Q = mergedResult->Q;
+		for (int query = 0; query < Q; ++query) {
+			thrust::sort_by_key(
+				dDistances.begin() + dCandidatesStartingIdxs[query],
+				dDistances.begin() + dCandidatesStartingIdxs[query] + dCandidatesSizes[query],
+				dCandidatesIdxs.begin() + dCandidatesStartingIdxs[query],
+				thrust::greater<float>()
+			);
+		}
+	}
+
+	ThrustFloatV Index::calculateDistances(const float* queries, unsigned Q, const ThrustUnsignedV& dCandidatesIdxs, const ThrustQueryResult* result) {
+		unsigned distancesNumber = result->resultSetSize;
+		ThrustFloatV dDistances(distancesNumber);
+
+		ThrustUnsignedV dQueriesIdxsToCandidates(distancesNumber);
+		for (int query = 0; query < Q; ++query) {
+			thrust::fill_n(
+				dQueriesIdxsToCandidates.begin() + result->resultStartingIdxs[query],
+				result->resultSizes[query],
+				query
+			);
+		}
+
+		ThrustFloatV dQueries(queries, queries + Q * d);
+		ThrustFloatV dDataset(dataset->dataset, dataset->dataset + N * d);
+
+		dim3 dimBlock(BLOCK_SIZE_STRIDE_X, BLOCK_SIZE_STRIDE_Y);
+		dim3 dimGrid((distancesNumber + dimBlock.x - 1)/ dimBlock.x);
+
+		calcSquaredDistances<<<dimGrid, dimBlock>>>(
+			thrust::raw_pointer_cast(dDataset.data()), N,
+			thrust::raw_pointer_cast(dQueries.data()), Q,
+			d,
+			thrust::raw_pointer_cast(dCandidatesIdxs.data()),
+			thrust::raw_pointer_cast(dQueriesIdxsToCandidates.data()),
+			distancesNumber,
+			thrust::raw_pointer_cast(dDistances.data())
+		);
+
+		return dDistances;
+	}
+
+	ThrustQueryResult* Index::mergeQueryResults(thrust::host_vector<ThrustQueryResult*>& results, unsigned Q) {
+		unsigned maxCandidatesNumber = getMaxCandidatesNumber(results);
 
 		ThrustHUnsignedV candidatesStartingIdxs(Q, 0);
 		ThrustHUnsignedV candidatesSizes(Q, 0);
-		ThrustHUnsignedV candidateIdxs(totalCandidatesNumber);
+		ThrustHUnsignedV candidateIdxs(maxCandidatesNumber);
 
 		unsigned queryOffset = 0;
 		for (int query = 0; query < Q; ++query) {
@@ -91,6 +158,18 @@ namespace cuANN {
 			candidatesSizes[query] = thrust::distance(candidatesForQueryBegin, candidatesForQueryEnd);
 			queryOffset += candidatesSizes[query];
 		}
+
+		auto totalCandidatesNumber = queryOffset;
+
+		return new ThrustQueryResult(candidatesStartingIdxs, candidatesSizes, candidateIdxs, Q, totalCandidatesNumber);
+	}
+
+	unsigned Index::getMaxCandidatesNumber(thrust::host_vector<ThrustQueryResult*>& results) {
+		thrust::host_vector<unsigned> resultsSizes(L);
+		thrust::transform(results.begin(), results.end(), resultsSizes.begin(), [](ThrustQueryResult* q) {
+			return q->resultSetSize;
+		});
+		return thrust::reduce(resultsSizes.begin(), resultsSizes.end());
 	}
 
 	void Index::allocateProjectionMemory() {

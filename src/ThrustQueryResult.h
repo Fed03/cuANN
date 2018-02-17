@@ -1,11 +1,11 @@
-#ifndef TABLEQUERYRESULT_H_
-#define TABLEQUERYRESULT_H_
+#ifndef __cuANN_THRUSTQUERYRESULT_H__
+#define __cuANN_THRUSTQUERYRESULT_H__
 
 #include "commons.h"
 
 namespace cuANN {
 
-	struct TableQueryResult {
+	struct ThrustQueryResult {
 		unsigned Q;
 		unsigned resultSetSize;
 
@@ -13,7 +13,7 @@ namespace cuANN {
 		ThrustHUnsignedV resultSizes;
 		ThrustHUnsignedV resultSet;
 
-		TableQueryResult(
+		ThrustQueryResult(
 			const ThrustHUnsignedV& resultStartingIdxs,
 			const ThrustHUnsignedV& resultSizes,
 			const ThrustHUnsignedV& resultSet,
@@ -21,7 +21,7 @@ namespace cuANN {
 		);
 	};
 
-	inline TableQueryResult::TableQueryResult(
+	inline ThrustQueryResult::ThrustQueryResult(
 		const ThrustHUnsignedV& resultStartingIdxs,
 		const ThrustHUnsignedV& resultSizes,
 		const ThrustHUnsignedV& resultSet,
@@ -37,4 +37,4 @@ namespace cuANN {
 }  // namespace cuANN
 
 
-#endif /* TABLEQUERYRESULT_H_ */
+#endif /* __cuANN_THRUSTQUERYRESULT_H__ */
