@@ -2,6 +2,11 @@
 #define __cuANN_HashTable__
 
 #include <thrust/gather.h>
+#include <thrust/count.h>
+#include <thrust/adjacent_difference.h>
+#include <thrust/iterator/constant_iterator.h>
+#include <thrust/sequence.h>
+#include <thrust/copy.h>
 #include "HashTable.h"
 #include "QueryBinCalculator.h"
 #include "utils.h"

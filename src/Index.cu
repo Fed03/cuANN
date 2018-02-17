@@ -1,6 +1,10 @@
 #ifndef __cuANN_Index__
 #define __cuANN_Index__
 
+#include <algorithm>
+#include <thrust/sort.h>
+#include <thrust/unique.h>
+#include <time.h>
 #include "commons.h"
 #include "utils.h"
 #include "Index.h"
@@ -14,7 +18,6 @@ namespace cuANN {
 		this->d = 0;
 		this->N = 0;
 
-		this->tables = std::vector<HashTable*>();
 		refresh(k, L, data, w);
 	};
 
@@ -31,7 +34,6 @@ namespace cuANN {
 
 		this->d = data->d;
 		this->N = data->N;
-		this->tables.resize(this->L);
 		std::cout << "refreshing data" << std::endl;
 		try
 		{
@@ -49,8 +51,9 @@ namespace cuANN {
 	}
 
 	bool Index::buildIndex() {
-		for(const auto &table : tables) {
-			table->hashDataset(dataset->dataset, dataset->N);
+		for (int i = 0; i < L; i++)
+		{	
+			tables[i]->hashDataset(dataset->dataset, dataset->N);
 		}
 		return true;
 	}
@@ -191,8 +194,9 @@ namespace cuANN {
 		curandSetPseudoRandomGeneratorSeed(uniform, (unsigned long long) time(0));
 		curandSetPseudoRandomGeneratorSeed(normal, (unsigned long long) time(0));
 
-		for (const auto &table : tables) {
-			table->generateProjection(&normal, &uniform);
+		for (int i = 0; i < L; i++)
+		{
+			tables[i]->generateProjection(&normal, &uniform);
 		}
 
 		curandDestroyGenerator(normal);
@@ -200,8 +204,9 @@ namespace cuANN {
 	}
 
 	void Index::freeProjectionMemory() {
-		for (const auto &table : tables) {
-			table->freeMemory();
+		for (int i = 0; i < L; i++)
+		{
+			tables[i]->freeMemory();
 		}
 	}
 }
