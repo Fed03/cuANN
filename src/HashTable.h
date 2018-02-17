@@ -46,7 +46,7 @@ namespace cuANN {
 
 		void calcBins(const ThrustFloatV& dProjectedMatrix);
 
-		ThrustBoolV areRowsDifferentFromTheOneAbove(const ThrustFloatV& matrix, const ThrustUnsignedV& dSortedPermutationIndx);
+		void areRowsDifferentFromTheOneAbove(const ThrustFloatV& matrix, const ThrustUnsignedV& dSortedPermutationIndx, ThrustIntV& rowsDiff);
 
 		ThrustUnsignedV computeStartingIndices(const ThrustBoolV& diff);
 
