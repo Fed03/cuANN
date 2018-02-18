@@ -29,7 +29,7 @@ namespace cuANN {
 		int cols = dataset->d;
 
 		thrust::device_vector<float> srcDataset(dataset->dataset, dataset->dataset + rows * cols);
-		thrust::device_vector<float> destDataset(dataset->dataset, dataset->dataset + rows * cols);
+		thrust::device_vector<float> destDataset(rows * cols);
 
 		dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);
