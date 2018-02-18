@@ -10,10 +10,10 @@ namespace cuANN {
 	void radixSortMatrix(const thrust::device_vector<float> &matrix, const int rows, const int cols, thrust::device_vector<unsigned> &sortedPermutationIndexes);
 
 
-	struct getOrDefault : public thrust::binary_function<float, unsigned, unsigned> {
+	struct getOrDefault : public thrust::binary_function<float, bool, bool> {
 		__host__ __device__
-		bool operator()(float actual, unsigned defaultValue) {
-			return (actual == 0) ? defaultValue : 1;
+		bool operator()(float actual, bool defaultValue) {
+			return (actual == 0) ? defaultValue : true;
 		}
 	};
 

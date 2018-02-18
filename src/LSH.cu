@@ -7,7 +7,6 @@
 namespace cuANN {
 	LSH::LSH(int k, int L, float w, Dataset* data) {
 		this->dataset = prepareDataset(data);
-		std::cout << "dataset prepared" << std::endl;
 		index = new Index(k, L, this->dataset, w);
 	}
 

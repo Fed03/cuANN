@@ -34,7 +34,6 @@ namespace cuANN {
 
 		this->d = data->d;
 		this->N = data->N;
-		std::cout << "refreshing data" << std::endl;
 		try
 		{
 			allocateProjectionMemory();
@@ -44,7 +43,6 @@ namespace cuANN {
 			std::cerr << e.what();
 			return false;
 		}
-		std::cout << "generating proj" << std::endl;
 		generateRandomProjections();
 
 		return true;

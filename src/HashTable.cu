@@ -90,7 +90,6 @@ namespace cuANN {
 	}
 
 	void HashTable::generateProjection(curandGenerator_t* normalGen, curandGenerator_t* uniformGen) {
-		std::cout << "allocating proj on device. params k: " << k << " d: " << d << std::endl;
 		ThrustFloatV dProjections(k * d);
 		ThrustFloatV dOffsetVector(k);
 
@@ -107,6 +106,7 @@ namespace cuANN {
 	}
 
 	void HashTable::hashDataset(const float* dataset, const int N) {
+		this->N = N;
 		ThrustFloatV dProjectedMatrix(N * k);
 		projectMatrix(dataset, N, dProjectedMatrix);
 		calcBins(dProjectedMatrix);
@@ -157,11 +157,11 @@ namespace cuANN {
 		ThrustUnsignedV dSortedPermutationIndx(N);
 
 		radixSortMatrix(dProjectedMatrix, N, k, dSortedPermutationIndx);
-		ThrustIntV diff;
-		areRowsDifferentFromTheOneAbove(dProjectedMatrix, dSortedPermutationIndx, diff);
-		cudaDeviceSynchronize();
-		int umber = thrust::count(diff.begin(), diff.end(), 1);
-		/*auto dBinStartingIndexes = computeStartingIndices(diff);
+
+		auto diff = areRowsDifferentFromTheOneAbove(dProjectedMatrix, dSortedPermutationIndx);
+		binsNumber = thrust::count(diff.begin(), diff.end(), true);
+
+		auto dBinStartingIndexes = computeStartingIndices(diff);
 		auto dBinSizes = computeBinSizes(dBinStartingIndexes);
 		auto dBinCodes = extractBinsCode(dProjectedMatrix, dBinStartingIndexes, dSortedPermutationIndx);
 
@@ -170,7 +170,7 @@ namespace cuANN {
 		thrust::copy(dSortedPermutationIndx.begin(), dSortedPermutationIndx.end(), sortedMappingIdxs);
 		thrust::copy(dBinStartingIndexes.begin(), dBinStartingIndexes.end(), binStartingIndexes);
 		thrust::copy(dBinSizes.begin(), dBinSizes.end(), binSizes);
-		thrust::copy(dBinCodes.begin(), dBinCodes.end(), binCodes);*/
+		thrust::copy(dBinCodes.begin(), dBinCodes.end(), binCodes);
 	}
 
 	ThrustFloatV HashTable::extractBinsCode(
@@ -228,11 +228,11 @@ namespace cuANN {
 		return startingIndices;
 	}
 
-	void HashTable::areRowsDifferentFromTheOneAbove(const ThrustFloatV& matrix, const ThrustUnsignedV& dSortedPermutationIndx, ThrustIntV& rowsDiff){
-		//ThrustBoolV rowsDiff(N);
+	ThrustBoolV HashTable::areRowsDifferentFromTheOneAbove(const ThrustFloatV& matrix, const ThrustUnsignedV& dSortedPermutationIndx){
+		ThrustBoolV rowsDiff(N);
 		ThrustFloatV dColumn(N);
 
-		thrust::fill(rowsDiff.begin(), rowsDiff.end(), 0);
+		thrust::fill(rowsDiff.begin(), rowsDiff.end(), false);
 
 		for (int col = 0; col < k; col++)
 		{
@@ -248,9 +248,9 @@ namespace cuANN {
 		}
 
 		// just in case first row is a zero vector
-		thrust::fill_n(rowsDiff.begin(), 1, 1);
+		thrust::fill_n(rowsDiff.begin(), 1, true);
 
-		//return std::move(rowsDiff);
+		return rowsDiff;
 	}
 
 	void HashTable::projectMatrix(const float* dataset, const int N, ThrustFloatV& dProjectedMatrix) {
