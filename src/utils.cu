@@ -138,6 +138,7 @@ namespace cuANN {
 				if(projectedQueries[i * Q + queryId] != binCodes[i * binsNumber + binIdxsCandidates[queryId]]) {
 					isValidIdx = false;
 				}
+				i++;
 			}
 
 			if (!isValidIdx) {
