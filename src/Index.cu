@@ -72,11 +72,13 @@ namespace cuANN {
 		sortDistancesAndTheirIdxs(dDistances, dCandidatesIdxs, mergedResult);
 
 		std::vector<QueryResult> finalResult;
+		unsigned size;
 		for (unsigned query = 0; query < Q; ++query) {
-			std::vector<unsigned> resultIdxsForQuery;
+			size = std::min(numberOfNeighbors, mergedResult->resultSizes[query]);
+			std::vector<unsigned> resultIdxsForQuery(size);
 			thrust::copy_n(
 				dCandidatesIdxs.begin() + mergedResult->resultStartingIdxs[query],
-				std::min(numberOfNeighbors, mergedResult->resultSizes[query]),
+				size,
 				resultIdxsForQuery.begin()
 			);
 			finalResult.emplace_back(query, std::move(resultIdxsForQuery));
