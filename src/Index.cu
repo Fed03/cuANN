@@ -81,7 +81,7 @@ namespace cuANN {
 				size,
 				resultIdxsForQuery.begin()
 			);
-			finalResult.emplace_back(query, std::move(resultIdxsForQuery));
+			finalResult.emplace_back(query, std::move(resultIdxsForQuery), size);
 		}
 
 		return finalResult;
