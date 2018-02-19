@@ -95,7 +95,7 @@ namespace cuANN {
 				dDistances.begin() + dCandidatesStartingIdxs[query],
 				dDistances.begin() + dCandidatesStartingIdxs[query] + dCandidatesSizes[query],
 				dCandidatesIdxs.begin() + dCandidatesStartingIdxs[query],
-				thrust::greater<float>()
+				thrust::less<float>()
 			);
 		}
 	}
@@ -161,6 +161,7 @@ namespace cuANN {
 		}
 
 		auto totalCandidatesNumber = queryOffset;
+		candidateIdxs.resize(totalCandidatesNumber);
 
 		return new ThrustQueryResult(candidatesStartingIdxs, candidatesSizes, candidateIdxs, Q, totalCandidatesNumber);
 	}
