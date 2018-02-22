@@ -16,13 +16,22 @@ namespace cuANN {
 			throw std::runtime_error("Cannot create cuBLAS handle.");
 		}
 
+//		cublasStatus_t status = cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+//			rowsA, colsB, colsA,
+//			&alpha,
+//			A, rowsA,
+//			B, colsA,
+//			&beta,
+//			result, rowsA
+//		);
+
 		cublasStatus_t status = cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
-			rowsA, colsB, colsA,
+			colsB, rowsA, colsA,
 			&alpha,
-			A, rowsA,
-			B, colsA,			
+			B, colsB,
+			A, colsA,
 			&beta,
-			result, rowsA
+			result, colsB
 		);
 
 		cublasDestroy(handle);
@@ -51,7 +60,7 @@ namespace cuANN {
 		int row = blockIdx.y * blockDim.y + threadIdx.y;
 
 		if (row < rowsA && col < colsA) {
-			matrix[rowsA * col + row] += vector[col];
+			matrix[colsA * row + col] += vector[col];
 		}
 	}
 
@@ -60,7 +69,7 @@ namespace cuANN {
 		int row = blockIdx.y * blockDim.y + threadIdx.y;
 
 		if (row < rowsA && col < colsA) {
-			matrix[rowsA * col + row] /= scalar;
+			matrix[colsA * row + col] /= scalar;
 		}
 	}
 
@@ -69,7 +78,7 @@ namespace cuANN {
 		int row = blockIdx.y * blockDim.y + threadIdx.y;
 
 		if (row < rowsA && col < colsA) {
-			matrix[rowsA * col + row] = std::floor(matrix[rowsA * col + row]);
+			matrix[colsA * row + col] = std::floor(matrix[colsA * row + col]);
 		}
 	}
 
