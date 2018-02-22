@@ -196,7 +196,7 @@ namespace cuANN {
 		}
 	}
 
-	__device__ void hashRange(float* iteratorBegin, float* iteratorEnd, size_t& result) {
+	__device__ void hashRange(const float* iteratorBegin, const float* iteratorEnd, size_t& result) {
 		size_t seed = 0;
 		while(iteratorBegin != iteratorEnd) {
 			seed ^= static_cast<int>(*iteratorBegin) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
@@ -205,7 +205,7 @@ namespace cuANN {
 		result = seed;
 	}
 
-	__global__ void hashMatrixRows(float* matrix, const int rows, const int cols, size_t* hashes) {
+	__global__ void hashMatrixRows(const float* matrix, const int rows, const int cols, size_t* hashes) {
 		int row = blockIdx.x * blockDim.x + threadIdx.x;
 
 		if(row < rows) {

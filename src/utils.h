@@ -70,9 +70,9 @@ namespace cuANN {
 		float* result
 	);
 
-	__global__ void hashMatrixRows(float* matrix, const int rows, const int cols, size_t* hashes);
+	__global__ void hashMatrixRows(const float* matrix, const int rows, const int cols, size_t* hashes);
 
-	__device__ void hashRange(float* iteratorBegin, float* iteratorEnd, size_t& result);
+	__device__ void hashRange(const float* iteratorBegin, const float* iteratorEnd, size_t& result);
 
 }
 

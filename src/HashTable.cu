@@ -17,7 +17,8 @@ namespace cuANN {
 		this->d = d;
 		this->w = w;
 		this->N = binsNumber = 0;
-		projectionsMatrix = offsetVector = binCodes = 0;
+		binCodes = 0;
+		projectionsMatrix = offsetVector = 0;
 		binSizes = binStartingIndexes = sortedMappingIdxs = 0;
 	}
 
