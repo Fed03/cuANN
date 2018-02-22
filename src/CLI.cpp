@@ -2,6 +2,7 @@
 #define __cuANN_CLI__
 
 #include <iostream>
+#include <iomanip>
 #include "CLI.h"
 #include "LSH.h"
 #include "FvecsReader.h"
@@ -34,13 +35,21 @@ namespace cuANN {
 
 		try
 		{
-			Dataset * dataset = getDataset(args["dataset"]);
-			Dataset * queries = getDataset(args["queries"], args["numberOfQueries"]);
+			std::string datasetFilePath = args["dataset"];
+			std::string queriesFilePath = args["queries"];
+			int numberOfQueries = args["numberOfQueries"];
+			int numberOfHashFuncs = args["hashFunc"];
+			int numberOfProjTables = args["tables"];
+			int numberOfNeighbors = args["neighbors"];
+			float binWidth = args["binWidth"];
 
-			LSH lsh(args["hashFunc"], args["tables"], args["binWidth"], dataset);
+			Dataset * dataset = getDataset(datasetFilePath);
+			Dataset * queries = getDataset(queriesFilePath, numberOfQueries);
+
+			LSH lsh(numberOfHashFuncs, numberOfProjTables, binWidth, dataset);
 			lsh.buildIndex();
-			auto result = lsh.query(queries, args["neighbors"]);
-			std::cout << "arrivato";
+			auto results = lsh.queryIndex(queries, numberOfNeighbors);
+			printResults(results);
 		}
 		catch (const std::exception& e )
 		{
@@ -50,6 +59,16 @@ namespace cuANN {
 
 
 		return 0;
+	}
+
+	void CLI::printResults(const std::vector<QueryResult>& results) {
+		for(const auto& result : results) {
+			std::cout << "Query idx: " << result.queryIdx << std::endl;
+			std::cout << "Result idx:" << std::endl;
+			for(const auto& id : result.resultIdx) {
+				std::cout << std::right << std::setw(8) << id << std::endl;
+			}
+		}
 	}
 
 	argagg::parser CLI::getParser()
