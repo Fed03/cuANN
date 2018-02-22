@@ -90,7 +90,6 @@ namespace cuANN {
 	}
 
 	void HashTable::generateProjection(curandGenerator_t* normalGen, curandGenerator_t* uniformGen) {
-		std::cout << "allocating proj on device. params k: " << k << " d: " << d << std::endl;
 		ThrustFloatV dProjections(k * d);
 		ThrustFloatV dOffsetVector(k);
 
@@ -107,6 +106,7 @@ namespace cuANN {
 	}
 
 	void HashTable::hashDataset(const float* dataset, const int N) {
+		this->N = N;
 		ThrustFloatV dProjectedMatrix(N * k);
 		projectMatrix(dataset, N, dProjectedMatrix);
 		calcBins(dProjectedMatrix);
@@ -157,9 +157,10 @@ namespace cuANN {
 		ThrustUnsignedV dSortedPermutationIndx(N);
 
 		radixSortMatrix(dProjectedMatrix, N, k, dSortedPermutationIndx);
-		auto diff = areRowsDifferentFromTheOneAbove(dProjectedMatrix, dSortedPermutationIndx);
 
+		auto diff = areRowsDifferentFromTheOneAbove(dProjectedMatrix, dSortedPermutationIndx);
 		binsNumber = thrust::count(diff.begin(), diff.end(), true);
+
 		auto dBinStartingIndexes = computeStartingIndices(diff);
 		auto dBinSizes = computeBinSizes(dBinStartingIndexes);
 		auto dBinCodes = extractBinsCode(dProjectedMatrix, dBinStartingIndexes, dSortedPermutationIndx);
@@ -247,7 +248,7 @@ namespace cuANN {
 		}
 
 		// just in case first row is a zero vector
-		rowsDiff[0] = true;
+		thrust::fill_n(rowsDiff.begin(), 1, true);
 
 		return rowsDiff;
 	}

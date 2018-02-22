@@ -34,7 +34,6 @@ namespace cuANN {
 
 		this->d = data->d;
 		this->N = data->N;
-		std::cout << "refreshing data" << std::endl;
 		try
 		{
 			allocateProjectionMemory();
@@ -44,7 +43,6 @@ namespace cuANN {
 			std::cerr << e.what();
 			return false;
 		}
-		std::cout << "generating proj" << std::endl;
 		generateRandomProjections();
 
 		return true;
@@ -61,7 +59,6 @@ namespace cuANN {
 	std::vector<QueryResult> Index::query(Dataset* queries, unsigned numberOfNeighbors) {
 		unsigned Q = queries->N;
 		thrust::host_vector<ThrustQueryResult*> results;
-		results.resize(L);
 
 		for (const auto& table : tables) {
 			results.push_back(table->query(queries->dataset, Q));
@@ -74,14 +71,16 @@ namespace cuANN {
 		sortDistancesAndTheirIdxs(dDistances, dCandidatesIdxs, mergedResult);
 
 		std::vector<QueryResult> finalResult;
+		unsigned size;
 		for (unsigned query = 0; query < Q; ++query) {
-			std::vector<unsigned> resultIdxsForQuery;
+			size = std::min(numberOfNeighbors, mergedResult->resultSizes[query]);
+			std::vector<unsigned> resultIdxsForQuery(size);
 			thrust::copy_n(
 				dCandidatesIdxs.begin() + mergedResult->resultStartingIdxs[query],
-				std::min(numberOfNeighbors, mergedResult->resultSizes[query]),
+				size,
 				resultIdxsForQuery.begin()
 			);
-			finalResult.emplace_back(query, std::move(resultIdxsForQuery));
+			finalResult.emplace_back(query, std::move(resultIdxsForQuery), size);
 		}
 
 		return finalResult;
@@ -97,7 +96,7 @@ namespace cuANN {
 				dDistances.begin() + dCandidatesStartingIdxs[query],
 				dDistances.begin() + dCandidatesStartingIdxs[query] + dCandidatesSizes[query],
 				dCandidatesIdxs.begin() + dCandidatesStartingIdxs[query],
-				thrust::greater<float>()
+				thrust::less<float>()
 			);
 		}
 	}
@@ -163,6 +162,7 @@ namespace cuANN {
 		}
 
 		auto totalCandidatesNumber = queryOffset;
+		candidateIdxs.resize(totalCandidatesNumber);
 
 		return new ThrustQueryResult(candidatesStartingIdxs, candidatesSizes, candidateIdxs, Q, totalCandidatesNumber);
 	}

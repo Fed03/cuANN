@@ -5,10 +5,11 @@ namespace cuANN {
 	struct QueryResult {
 		unsigned queryIdx;
 		std::vector<unsigned> resultIdx;
+		unsigned resultSize;
 
-		QueryResult(unsigned idx, std::vector<unsigned>&& result) : queryIdx(idx), resultIdx(std::move(result)){
-
-		}
+		QueryResult(unsigned idx, std::vector<unsigned>&& result, unsigned numbersOfNeighbors) :
+			queryIdx(idx), resultIdx(std::move(result)), resultSize(numbersOfNeighbors)
+		{}
 	};
 }
 

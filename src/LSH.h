@@ -16,7 +16,7 @@ namespace cuANN {
 
 		void buildIndex();
 
-		std::vector<QueryResult> query(Dataset* queries, unsigned numberOfNeighbors);
+		std::vector<QueryResult> queryIndex(Dataset* queries, int numberOfNeighbors);
 
 	private:
 		Dataset * dataset;

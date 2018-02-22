@@ -7,7 +7,6 @@
 namespace cuANN {
 	LSH::LSH(int k, int L, float w, Dataset* data) {
 		this->dataset = prepareDataset(data);
-		std::cout << "dataset prepared" << std::endl;
 		index = new Index(k, L, this->dataset, w);
 	}
 
@@ -19,7 +18,7 @@ namespace cuANN {
 		this->index->buildIndex();
 	}
 
-	std::vector<QueryResult> LSH::query(Dataset* queries, unsigned numberOfNeighbors) {
+	std::vector<QueryResult> LSH::queryIndex(Dataset* queries, int numberOfNeighbors) {
 		auto colMajorQueries = prepareDataset(queries);
 		return index->query(colMajorQueries, numberOfNeighbors);
 	}
@@ -29,7 +28,7 @@ namespace cuANN {
 		int cols = dataset->d;
 
 		thrust::device_vector<float> srcDataset(dataset->dataset, dataset->dataset + rows * cols);
-		thrust::device_vector<float> destDataset(dataset->dataset, dataset->dataset + rows * cols);
+		thrust::device_vector<float> destDataset(rows * cols);
 
 		dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
 		dim3 dimGrid((cols + dimBlock.x - 1) / dimBlock.x, (rows + dimBlock.y - 1) / dimBlock.y);

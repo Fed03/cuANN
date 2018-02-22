@@ -105,15 +105,16 @@ namespace cuANN {
 	){
 		int col = blockIdx.x * blockDim.x + threadIdx.x;
 		int row = blockIdx.y * blockDim.y + threadIdx.y;
-		int totalRows = firstRows * secondRows;
+		int totalRows = firstRows + secondRows;
 
 		if (row < totalRows && col < cols) {
 			float value = 0.0;
+			int rowIdx = row % firstRows;
 			if(row < firstRows) {
-				value = firstMatrix[firstRows * col + row];
+				value = firstMatrix[firstRows * col + rowIdx];
 			}
-			if(row >= firstRows && row < secondRows) {
-				value = secondMatrix[secondRows * col + row];
+			if(row >= firstRows) {
+				value = secondMatrix[secondRows * col + rowIdx];
 			}
 
 			destMatrix[totalRows * col + row] = value;
@@ -137,6 +138,7 @@ namespace cuANN {
 				if(projectedQueries[i * Q + queryId] != binCodes[i * binsNumber + binIdxsCandidates[queryId]]) {
 					isValidIdx = false;
 				}
+				i++;
 			}
 
 			if (!isValidIdx) {
