@@ -195,6 +195,26 @@ namespace cuANN {
 			result[distanceIdx] = distances[threadIdx.x][0] + distances[threadIdx.x][1];
 		}
 	}
+
+	__device__ void hashRange(float* iteratorBegin, float* iteratorEnd, size_t& result) {
+		size_t seed = 0;
+		while(iteratorBegin != iteratorEnd) {
+			seed ^= static_cast<int>(*iteratorBegin) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			++iteratorBegin;
+		}
+		result = seed;
+	}
+
+	__global__ void hashMatrixRows(float* matrix, const int rows, const int cols, size_t* hashes) {
+		int row = blockIdx.x * blockDim.x + threadIdx.x;
+
+		if(row < rows) {
+			size_t hash;
+			hashRange(matrix + cols * row, matrix + cols * (row + 1), hash);
+			hashes[row] = hash;
+		}
+	}
+
 }
 
 #endif // !__cuANN_utils__

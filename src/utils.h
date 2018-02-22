@@ -9,7 +9,6 @@ namespace cuANN {
 
 	void radixSortMatrix(const thrust::device_vector<float> &matrix, const int rows, const int cols, thrust::device_vector<unsigned> &sortedPermutationIndexes);
 
-
 	struct getOrDefault : public thrust::binary_function<float, bool, bool> {
 		__host__ __device__
 		bool operator()(float actual, bool defaultValue) {
@@ -63,6 +62,11 @@ namespace cuANN {
 		unsigned distancesNumber,
 		float* result
 	);
+
+	__global__ void hashMatrixRows(float* matrix, const int rows, const int cols, size_t* hashes);
+
+	__device__ void hashRange(float* iteratorBegin, float* iteratorEnd, size_t& result);
+
 }
 
 
