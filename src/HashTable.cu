@@ -42,7 +42,7 @@ namespace cuANN {
 		binSizes = (unsigned *) malloc(binsNumber * sizeof(unsigned));
 		binStartingIndexes = (unsigned *) malloc(binsNumber * sizeof(unsigned));
 		sortedMappingIdxs = (unsigned *) malloc(N * sizeof(unsigned));
-		binCodes = (float *) malloc(binsNumber * k * sizeof(float));
+		binCodes = (size_t *) malloc(binsNumber * sizeof(size_t));
 
 		if (!(binSizes && binStartingIndexes && sortedMappingIdxs && binCodes))
 		{
@@ -154,16 +154,30 @@ namespace cuANN {
 	}
 
 	void HashTable::calcBins(const ThrustFloatV& dProjectedMatrix) {
+		thrust::device_vector<size_t> hashes(N);
+
+		dim3 dimBlock(BLOCK_SIZE * BLOCK_SIZE);
+		dim3 dimGrid((N + dimBlock.x - 1)/dimBlock.x);
+		hashMatrixRows<<<dimGrid, dimBlock>>>(
+			thrust::raw_pointer_cast(dProjectedMatrix.data()),
+			N, k,
+			thrust::raw_pointer_cast(hashes.data())
+		);
+
 		ThrustUnsignedV dSortedPermutationIndx(N);
+		thrust::sequence(dSortedPermutationIndx.begin(), dSortedPermutationIndx.end());
+		thrust::stable_sort_by_key(hashes.begin(), hashes.end(), dSortedPermutationIndx.begin());
 
-		radixSortMatrix(dProjectedMatrix, N, k, dSortedPermutationIndx);
+		ThrustBoolV diff(N);
+		thrust::adjacent_difference(hashes.begin(), hashes.end(), diff.begin());
+		thrust::transform(diff.begin(), diff.end(), diff.begin(), isDifferentFromZero());
+		thrust::fill_n(diff.begin(), 1, true);
 
-		auto diff = areRowsDifferentFromTheOneAbove(dProjectedMatrix, dSortedPermutationIndx);
 		binsNumber = thrust::count(diff.begin(), diff.end(), true);
 
 		auto dBinStartingIndexes = computeStartingIndices(diff);
 		auto dBinSizes = computeBinSizes(dBinStartingIndexes);
-		auto dBinCodes = extractBinsCode(dProjectedMatrix, dBinStartingIndexes, dSortedPermutationIndx);
+		auto dBinCodes = extractBinsCode(hashes, dBinStartingIndexes);
 
 		allocateBinsMemory();
 
@@ -173,24 +187,15 @@ namespace cuANN {
 		thrust::copy(dBinCodes.begin(), dBinCodes.end(), binCodes);
 	}
 
-	ThrustFloatV HashTable::extractBinsCode(
-		const ThrustFloatV& dProjectedMatrix,
-		const ThrustUnsignedV& startingIndices,
-		const ThrustUnsignedV& dSortedPermutationIndx
+	thrust::device_vector<size_t> HashTable::extractBinsCode(
+		const thrust::device_vector<size_t>& hashes,
+		const ThrustUnsignedV& startingIndices
 	) {
-		ThrustFloatV codes(binsNumber * k);
-		auto originalIdxs = originalDatasetIdxsFromStartingIdxs(startingIndices, dSortedPermutationIndx);
+		thrust::device_vector<size_t> hashCodes(binsNumber);
 
-		dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-		dim3 dimGrid((k + dimBlock.x - 1)/dimBlock.x, (binsNumber + dimBlock.y - 1)/dimBlock.y);
-		copyGivenRowsFromMatrix<<<dimGrid, dimBlock>>>(
-			thrust::raw_pointer_cast(dProjectedMatrix.data()),
-			thrust::raw_pointer_cast(codes.data()),
-			N, binsNumber, k,
-			thrust::raw_pointer_cast(originalIdxs.data())
-		);
+		thrust::gather(startingIndices.begin(), startingIndices.end(), hashes.begin(), hashCodes.begin());
 
-		return codes;
+		return hashCodes;
 	}
 
 	ThrustUnsignedV HashTable::originalDatasetIdxsFromStartingIdxs(

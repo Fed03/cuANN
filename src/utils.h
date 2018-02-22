@@ -23,6 +23,13 @@ namespace cuANN {
 		}
 	};
 
+	struct isDifferentFromZero {
+		__host__ __device__
+		bool operator()(const size_t value) {
+			return value != 0;
+		}
+	};
+
 	__global__ void addVectorFromMatrix(float* matrix, const float* vector, const int rowsA, const int colsA);
 
 	__global__ void divideMatrixByScalar(float* matrix, const int scalar, const int rowsA, const int colsA);

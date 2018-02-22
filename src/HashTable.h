@@ -36,7 +36,7 @@ namespace cuANN {
 		unsigned *sortedMappingIdxs;
 		unsigned *binSizes;
 		unsigned *binStartingIndexes;
-		float *binCodes;
+		size_t *binCodes;
 
 		void freeProjectionMemory();
 
@@ -54,10 +54,9 @@ namespace cuANN {
 
 		ThrustUnsignedV originalDatasetIdxsFromStartingIdxs(const ThrustUnsignedV& startingIndices, const ThrustUnsignedV& dSortedPermutationIndx);
 
-		ThrustFloatV extractBinsCode(
-			const ThrustFloatV& dProjectedMatrix,
-			const ThrustUnsignedV& startingIndices,
-			const ThrustUnsignedV& dSortedPermutationIndx
+		thrust::device_vector<size_t> extractBinsCode(
+			const thrust::device_vector<size_t>& hashes,
+			const ThrustUnsignedV& startingIndices
 		);
 
 		void projectMatrix(const float* dataset, const int N, ThrustFloatV& dProjectedMatrix);
