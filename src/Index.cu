@@ -59,7 +59,6 @@ namespace cuANN {
 	std::vector<QueryResult> Index::query(Dataset* queries, unsigned numberOfNeighbors) {
 		unsigned Q = queries->N;
 		thrust::host_vector<ThrustQueryResult*> results;
-		results.resize(L);
 
 		for (const auto& table : tables) {
 			results.push_back(table->query(queries->dataset, Q));
