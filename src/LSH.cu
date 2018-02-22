@@ -6,7 +6,8 @@
 
 namespace cuANN {
 	LSH::LSH(int k, int L, float w, Dataset* data) {
-		this->dataset = prepareDataset(data);
+//		this->dataset = prepareDataset(data);
+		this->dataset = data;
 		index = new Index(k, L, this->dataset, w);
 	}
 
@@ -19,8 +20,8 @@ namespace cuANN {
 	}
 
 	std::vector<QueryResult> LSH::queryIndex(Dataset* queries, int numberOfNeighbors) {
-		auto colMajorQueries = prepareDataset(queries);
-		return index->query(colMajorQueries, numberOfNeighbors);
+//		auto colMajorQueries = prepareDataset(queries);
+		return index->query(queries, numberOfNeighbors);
 	}
 
 	Dataset* LSH::prepareDataset(Dataset* dataset) {
