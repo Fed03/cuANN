@@ -6,6 +6,7 @@
 #include "CLI.h"
 #include "LSH.h"
 #include "FvecsReader.h"
+#include "IvecsReader.h"
 
 namespace cuANN {
 	CLI::CLI(int argc, char** argv) : argcount(argc), argvalue(argv), argparser(getParser())
@@ -37,6 +38,7 @@ namespace cuANN {
 		{
 			std::string datasetFilePath = args["dataset"];
 			std::string queriesFilePath = args["queries"];
+			std::string groundtruthFilePath = args["groundtruth"];
 			int numberOfQueries = args["numberOfQueries"];
 			int numberOfHashFuncs = args["hashFunc"];
 			int numberOfProjTables = args["tables"];
@@ -45,6 +47,7 @@ namespace cuANN {
 
 			Dataset * dataset = getDataset(datasetFilePath);
 			Dataset * queries = getDataset(queriesFilePath, numberOfQueries);
+			this->groundtruthIdxs = loadGroundTruthIdxs(groundtruthFilePath, numberOfQueries);
 
 			LSH lsh(numberOfHashFuncs, numberOfProjTables, binWidth, dataset);
 			lsh.buildIndex();
@@ -64,11 +67,15 @@ namespace cuANN {
 	void CLI::printResults(const std::vector<QueryResult>& results) {
 		for(const auto& result : results) {
 			std::cout << "Query idx: " << result.queryIdx << std::endl;
-			std::cout << "Result idx" << std::endl;
-			for(const auto& id : result.resultIdx) {
-				std::cout << std::right << std::setw(10) << id << std::endl;
+			std::cout << "Result idx   Groundtruth" << std::endl;
+			for (int i = 0; i < result.resultIdx.size(); ++i) {
+				std::cout << std::right
+					<< std::setw(10) << result.resultIdx[i]
+					<< std::setw(14) << groundtruthIdxs[result.queryIdx][i]
+					<< std::endl;
 			}
-			std::cout << "==============" << std::endl;
+
+			std::cout << "==========================" << std::endl;
 		}
 	}
 
@@ -77,6 +84,7 @@ namespace cuANN {
 		argagg::parser argparser{{
 			{ "dataset", { "--dataset" }, "The dataset file in .fvecs format", 1 },
 			{ "queries", { "--queries" }, "The queries file in .fvecs format", 1 },
+			{ "groundtruth", { "--groundtruth" }, "The groundtruth file in .ivecs format", 1 },
 			{ "binWidth", { "-w" }, "", 1},
 			{ "numberOfQueries", { "-q" }, "How many query vectors to load", 1 },
 			{ "neighbors", { "-n" }, "How many neighbors to return per query", 1 },
@@ -88,7 +96,7 @@ namespace cuANN {
 
 	bool CLI::checkArgs(argagg::parser_results* args)
 	{
-		std::string requiredArgs[] = { "dataset", "queries", "numberOfQueries", "neighbors", "tables", "hashFunc", "binWidth" };
+		std::string requiredArgs[] = { "dataset", "queries", "groundtruth", "numberOfQueries", "neighbors", "tables", "hashFunc", "binWidth" };
 		for (const auto &argName : requiredArgs) {
 			if (!(*args)[argName]) return false;
 		}
@@ -105,6 +113,11 @@ namespace cuANN {
 	{
 		auto f = new FvecsReader(filePath);
 		return f->readVectors(howMany);
+	}
+
+	vector<vector<int>> CLI::loadGroundTruthIdxs(std::string filePath, int howMany) {
+		auto f = new IvecsReader(filePath);
+		return f->readGroundTruthIdxs(howMany);
 	}
 }
 
