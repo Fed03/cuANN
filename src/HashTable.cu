@@ -117,9 +117,19 @@ namespace cuANN {
 		ThrustFloatV dProjectedQueries(Q * k);
 		projectMatrix(queries, Q, dProjectedQueries);
 
-		auto dQueriesBinIdxs = QueryBinCalculator::getBinsForProjectedQueries(
-			dProjectedQueries,
-			Q, k, binsNumber,
+		ThrustSizetV queryHashes(Q);
+
+		dim3 dimBlock(BLOCK_SIZE * BLOCK_SIZE);
+		dim3 dimGrid((Q + dimBlock.x - 1)/dimBlock.x);
+		hashMatrixRows<<<dimGrid, dimBlock>>>(
+			thrust::raw_pointer_cast(dProjectedQueries.data()),
+			Q, k,
+			thrust::raw_pointer_cast(queryHashes.data())
+		);
+
+		auto dQueriesBinIdxs = QueryBinCalculator::getBinsForQueryHashes(
+			queryHashes,
+			Q, binsNumber,
 			binCodes
 		);
 

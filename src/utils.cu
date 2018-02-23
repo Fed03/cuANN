@@ -146,8 +146,8 @@ namespace cuANN {
 	}
 
 	__global__ void calcSquaredDistances(
-		const float* A, int rowsA,
-		const float* B, int rowsB,
+		const float* A,
+		const float* B,
 		int cols,
 		const unsigned* rowIdxsA,
 		const unsigned* rowIdxsB,
@@ -163,7 +163,7 @@ namespace cuANN {
 
 			float distance = 0.0;
 			for (int strideIdx = threadIdx.y; strideIdx < cols; strideIdx += BLOCK_SIZE_STRIDE_Y) {
-				distance += powf(A[strideIdx * rowsA + ARowIdx] - B[strideIdx * rowsB + BRowIdx], 2);
+				distance += powf(A[cols * ARowIdx + strideIdx] - B[cols * BRowIdx + strideIdx], 2);
 			}
 
 			distances[threadIdx.x][threadIdx.y] = distance;

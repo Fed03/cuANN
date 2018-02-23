@@ -61,8 +61,8 @@ namespace cuANN {
 	);
 
 	__global__ void calcSquaredDistances(
-		const float* A, int rowsA,
-		const float* B, int rowsB,
+		const float* A,
+		const float* B,
 		int cols,
 		const unsigned* rowIdxsA,
 		const unsigned* rowIdxsB,
