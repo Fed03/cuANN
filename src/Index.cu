@@ -121,8 +121,8 @@ namespace cuANN {
 		dim3 dimGrid((distancesNumber + dimBlock.x - 1)/ dimBlock.x);
 
 		calcSquaredDistances<<<dimGrid, dimBlock>>>(
-			thrust::raw_pointer_cast(dDataset.data()), N,
-			thrust::raw_pointer_cast(dQueries.data()), Q,
+			thrust::raw_pointer_cast(dDataset.data()),
+			thrust::raw_pointer_cast(dQueries.data()),
 			d,
 			thrust::raw_pointer_cast(dCandidatesIdxs.data()),
 			thrust::raw_pointer_cast(dQueriesIdxsToCandidates.data()),

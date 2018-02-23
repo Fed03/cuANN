@@ -21,8 +21,6 @@ namespace cuANN {
 	private:
 		Dataset * dataset;
 		Index* index;
-
-		Dataset* prepareDataset(Dataset* dataset);
 	};
 }
 
