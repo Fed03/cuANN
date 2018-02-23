@@ -209,17 +209,6 @@ namespace cuANN {
 		return hashCodes;
 	}
 
-	ThrustUnsignedV HashTable::originalDatasetIdxsFromStartingIdxs(
-		const ThrustUnsignedV& startingIndices,
-		const ThrustUnsignedV& dSortedPermutationIndx
-	) {
-		ThrustUnsignedV originalIdxs(startingIndices.size());
-
-		thrust::gather(startingIndices.begin(), startingIndices.end(), dSortedPermutationIndx.begin(), originalIdxs.begin());
-
-		return originalIdxs;
-	}
-
 	ThrustUnsignedV HashTable::computeBinSizes(const ThrustUnsignedV& startingIndices) {
 		ThrustUnsignedV sizes(binsNumber);
 
@@ -242,31 +231,6 @@ namespace cuANN {
 		thrust::copy_if(mapping.begin(), mapping.end(), diff.begin(), startingIndices.begin(), isTrue());
 
 		return startingIndices;
-	}
-
-	ThrustBoolV HashTable::areRowsDifferentFromTheOneAbove(const ThrustFloatV& matrix, const ThrustUnsignedV& dSortedPermutationIndx){
-		ThrustBoolV rowsDiff(N);
-		ThrustFloatV dColumn(N);
-
-		thrust::fill(rowsDiff.begin(), rowsDiff.end(), false);
-
-		for (int col = 0; col < k; col++)
-		{
-			thrust::gather(
-				dSortedPermutationIndx.begin(), dSortedPermutationIndx.end(),
-				matrix.begin() + N * col, dColumn.begin()
-			);
-			thrust::adjacent_difference(dColumn.begin(), dColumn.end(), dColumn.begin());
-			thrust::transform(
-				dColumn.begin(), dColumn.end(), rowsDiff.begin(),
-				rowsDiff.begin(), getOrDefault()
-			);
-		}
-
-		// just in case first row is a zero vector
-		thrust::fill_n(rowsDiff.begin(), 1, true);
-
-		return rowsDiff;
 	}
 
 	void HashTable::projectMatrix(const float* dataset, const int N, ThrustFloatV& dProjectedMatrix) {

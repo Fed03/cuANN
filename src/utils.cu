@@ -41,20 +41,6 @@ namespace cuANN {
 		}
 	}
 
-	void radixSortMatrix(const thrust::device_vector<float> &matrix, const int rows, const int cols, thrust::device_vector<unsigned> &sortedPermutationIndexes) {
-		thrust::device_vector<float> dColumn(rows);
-		thrust::sequence(sortedPermutationIndexes.begin(), sortedPermutationIndexes.end());
-
-		for (int i = (cols - 1); i >= 0; i--)
-		{
-			thrust::gather(
-				sortedPermutationIndexes.begin(), sortedPermutationIndexes.end(),
-				matrix.begin() + rows * i, dColumn.begin()
-			);
-			thrust::stable_sort_by_key(dColumn.begin(), dColumn.end(), sortedPermutationIndexes.begin());
-		}
-	}
-
 	__global__ void addVectorFromMatrix(float* matrix, const float* vector, const int rowsA, const int colsA) {
 		int col = blockIdx.x * blockDim.x + threadIdx.x;
 		int row = blockIdx.y * blockDim.y + threadIdx.y;
@@ -79,54 +65,6 @@ namespace cuANN {
 
 		if (row < rowsA && col < colsA) {
 			matrix[colsA * row + col] = std::floor(matrix[colsA * row + col]);
-		}
-	}
-
-	__global__ void convertMatrixFromRawMajorToColumnMajor(const float* srcMatrix, float* destMatrix, const int rows, const int cols) {
-		int col = blockIdx.x * blockDim.x + threadIdx.x;
-		int row = blockIdx.y * blockDim.y + threadIdx.y;
-		
-		if (row < rows && col < cols) {
-			int rowMajorIdx = cols * row + col;
-			int colMajorIdx = rows * col + row;
-			destMatrix[colMajorIdx] = srcMatrix[rowMajorIdx];
-		}
-	}
-
-	__global__ void copyGivenRowsFromMatrix(
-		const float* srcMatrix, float* destMatrix,
-		const int srcRows, const int destRows, const int cols,
-		const unsigned* rowIdxs
-	) {
-		int col = blockIdx.x * blockDim.x + threadIdx.x;
-		int row = blockIdx.y * blockDim.y + threadIdx.y;
-
-		if (col < cols && row < destRows) {
-			destMatrix[col * destRows + row] = srcMatrix[col * srcRows + rowIdxs[row]];
-		}
-	}
-
-	// concatenate 2 matrices placing the 2nd under the 1st
-	__global__ void concatenateMatricesBelow(
-		const float* firstMatrix, const float* secondMatrix,
-		const int firstRows, const int secondRows, const int cols,
-		float* destMatrix
-	){
-		int col = blockIdx.x * blockDim.x + threadIdx.x;
-		int row = blockIdx.y * blockDim.y + threadIdx.y;
-		int totalRows = firstRows + secondRows;
-
-		if (row < totalRows && col < cols) {
-			float value = 0.0;
-			int rowIdx = row % firstRows;
-			if(row < firstRows) {
-				value = firstMatrix[firstRows * col + rowIdx];
-			}
-			if(row >= firstRows) {
-				value = secondMatrix[secondRows * col + rowIdx];
-			}
-
-			destMatrix[totalRows * col + row] = value;
 		}
 	}
 
