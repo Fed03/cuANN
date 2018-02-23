@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <chrono>
 #include "CLI.h"
 #include "LSH.h"
 #include "FvecsReader.h"
@@ -49,9 +50,18 @@ namespace cuANN {
 			Dataset * queries = getDataset(queriesFilePath, numberOfQueries);
 			this->groundtruthIdxs = loadGroundTruthIdxs(groundtruthFilePath, numberOfQueries);
 
+			auto startTime = std::chrono::high_resolution_clock::now();
+
 			LSH lsh(numberOfHashFuncs, numberOfProjTables, binWidth, dataset);
 			lsh.buildIndex();
 			auto results = lsh.queryIndex(queries, numberOfNeighbors);
+
+			auto endTime = std::chrono::high_resolution_clock::now();
+			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+
+			std::cout << "==========================" << std::endl;
+			std::cout << "Elapsed " << duration << " ms" << std::endl;
+			std::cout << "==========================" << std::endl;
 			printResults(results);
 		}
 		catch (const std::exception& e )
