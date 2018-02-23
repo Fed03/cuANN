@@ -132,25 +132,14 @@ namespace cuANN {
 
 	__global__ void getActualBinIdxs(
 		int* binIdxsCandidates,
-		const float* projectedQueries,
-		const float* binCodes,
-		int Q, int k, int binsNumber
+		const size_t* queryHashes,
+		const size_t* binCodes,
+		int Q, int binsNumber
 	) {
 		int queryId = blockIdx.x * blockDim.x + threadIdx.x;
-		int i;
-		bool isValidIdx;
 
 		if(queryId < Q && binIdxsCandidates[queryId] >= 0) {
-			i = 0;
-			isValidIdx = true;
-			while(i < k && isValidIdx) {
-				if(projectedQueries[i * Q + queryId] != binCodes[i * binsNumber + binIdxsCandidates[queryId]]) {
-					isValidIdx = false;
-				}
-				i++;
-			}
-
-			if (!isValidIdx) {
+			if (queryHashes[queryId] != binCodes[binIdxsCandidates[queryId]]) {
 				binIdxsCandidates[queryId] = -1;
 			}
 		}

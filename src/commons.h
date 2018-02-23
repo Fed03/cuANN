@@ -11,6 +11,7 @@ typedef thrust::device_vector<float> ThrustFloatV;
 typedef thrust::device_vector<unsigned> ThrustUnsignedV;
 typedef thrust::device_vector<int> ThrustIntV;
 typedef thrust::device_vector<bool> ThrustBoolV;
+typedef thrust::device_vector<size_t> ThrustSizetV;
 
 typedef thrust::host_vector<int> ThrustHIntV;
 typedef thrust::host_vector<unsigned> ThrustHUnsignedV;

@@ -7,25 +7,25 @@ namespace cuANN {
 
 class QueryBinCalculator {
 public:
-	static ThrustIntV getBinsForProjectedQueries(
-		const ThrustFloatV& dProjectedQueries, int Q, int k,
-		int binsNumber, const float* binCodes
+	static ThrustIntV getBinsForQueryHashes(
+		const ThrustSizetV& dProjectedQueries, int Q,
+		int binsNumber, const size_t* binCodes
 	);
 private:
 	QueryBinCalculator(){}
 
-	static ThrustFloatV concatenateBinCodesAndProjectedQueries(
-		const ThrustFloatV& dProjectedQueries, int Q, int k,
-		int binsNumber, const ThrustFloatV& dBinCodes
+	static ThrustSizetV concatenateBinCodesAndQueryHashes(
+		const ThrustSizetV& dProjectedQueries, int Q,
+		int binsNumber, const ThrustSizetV& dBinCodes
 	);
 
-	static ThrustUnsignedV sortMatrixRows(const ThrustFloatV& matrix, int rows, int cols);
+	static ThrustUnsignedV sortHashes(ThrustSizetV& hashes, unsigned size);
 
 	static ThrustIntV calcBinIdxs(
 			const ThrustUnsignedV& permutationIdxsVec,
-			const ThrustFloatV& dProjectedQueries,
-			const ThrustFloatV& dBinCodes,
-			int Q, int k, int binsNumber
+			const ThrustSizetV& queryHahes,
+			const ThrustSizetV& dBinCodes,
+			int Q, int binsNumber
 	);
 
 	static ThrustIntV calcIdxsCandidates(const ThrustUnsignedV& permutationIdxsVec, int binsNumber, int Q);

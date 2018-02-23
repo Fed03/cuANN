@@ -55,9 +55,9 @@ namespace cuANN {
 
 	__global__ void getActualBinIdxs(
 		int* binIdxsCandidates,
-		const float* projectedQueries,
-		const float* binCodes,
-		int Q, int k, int binsNumber
+		const size_t* queryHashes,
+		const size_t* binCodes,
+		int Q, int binsNumber
 	);
 
 	__global__ void calcSquaredDistances(

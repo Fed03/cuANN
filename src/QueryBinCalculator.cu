@@ -2,23 +2,23 @@
 #include "utils.h"
 
 namespace cuANN {
-	ThrustIntV QueryBinCalculator::getBinsForProjectedQueries(
-		const ThrustFloatV& dProjectedQueries, int Q, int k,
-		int binsNumber, const float* binCodes
+	ThrustIntV QueryBinCalculator::getBinsForQueryHashes(
+		const ThrustSizetV& queryHashes, int Q,
+		int binsNumber, const size_t* binCodes
 	) {
-		ThrustFloatV dBinCodes(binCodes, binCodes + binsNumber * k);
+		ThrustSizetV dBinCodes(binCodes, binCodes + binsNumber);
 
-		auto concatenatedMatrix = concatenateBinCodesAndProjectedQueries(dProjectedQueries, Q, k, binsNumber, dBinCodes);
-		auto permutationIdxs = sortMatrixRows(concatenatedMatrix, binsNumber+Q, k);
+		auto concatenatedHashes = concatenateBinCodesAndQueryHashes(queryHashes, Q, binsNumber, dBinCodes);
+		auto permutationIdxs = sortHashes(concatenatedHashes, binsNumber+Q);
 
-		return calcBinIdxs(permutationIdxs, dProjectedQueries, dBinCodes, Q, k, binsNumber);
+		return calcBinIdxs(permutationIdxs, queryHashes, dBinCodes, Q, binsNumber);
 	}
 
 	ThrustIntV QueryBinCalculator::calcBinIdxs(
 			const ThrustUnsignedV& permutationIdxsVec,
-			const ThrustFloatV& dProjectedQueries,
-			const ThrustFloatV& dBinCodes,
-			int Q, int k, int binsNumber
+			const ThrustSizetV& queryHashes,
+			const ThrustSizetV& dBinCodes,
+			int Q, int binsNumber
 	) {
 		auto binIdxsCandidates = calcIdxsCandidates(permutationIdxsVec, binsNumber, Q);
 
@@ -26,9 +26,9 @@ namespace cuANN {
 		dim3 dimGrid((Q + dimBlock.x - 1)/dimBlock.x);
 		getActualBinIdxs<<<dimGrid, dimBlock>>>(
 			thrust::raw_pointer_cast(binIdxsCandidates.data()),
-			thrust::raw_pointer_cast(dProjectedQueries.data()),
+			thrust::raw_pointer_cast(queryHashes.data()),
 			thrust::raw_pointer_cast(dBinCodes.data()),
-			Q, k, binsNumber
+			Q, binsNumber
 		);
 
 		return binIdxsCandidates;
@@ -56,27 +56,23 @@ namespace cuANN {
 		return ThrustIntV(binIdxsForQueries);
 	}
 
-	ThrustUnsignedV QueryBinCalculator::sortMatrixRows(const ThrustFloatV& matrix, int rows, int cols) {
-		ThrustUnsignedV dSortedPermutationIdxsForQueries(rows);
-		radixSortMatrix(matrix, rows, cols, dSortedPermutationIdxsForQueries);
+	ThrustUnsignedV QueryBinCalculator::sortHashes(ThrustSizetV& hashes, unsigned size) {
+		ThrustUnsignedV dSortedPermutationIdxsForQueries(size);
+		thrust::sequence(dSortedPermutationIdxsForQueries.begin(), dSortedPermutationIdxsForQueries.end());
+
+		thrust::stable_sort_by_key(hashes.begin(), hashes.end(), dSortedPermutationIdxsForQueries.begin());
 
 		return dSortedPermutationIdxsForQueries;
 	}
 
-	ThrustFloatV QueryBinCalculator::concatenateBinCodesAndProjectedQueries(
-		const ThrustFloatV& dProjectedQueries, int Q, int k,
-		int binsNumber, const ThrustFloatV& dBinCodes
+	ThrustSizetV QueryBinCalculator::concatenateBinCodesAndQueryHashes(
+		const ThrustSizetV& queryHashes, int Q,
+		int binsNumber, const ThrustSizetV& dBinCodes
 	) {
-		ThrustFloatV concatenated((binsNumber + Q)*k);
+		ThrustSizetV concatenated(binsNumber + Q);
 
-		dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-		dim3 dimGrid((k + dimBlock.x - 1)/dimBlock.x, (binsNumber + Q + dimBlock.y - 1)/dimBlock.y);
-
-		concatenateMatricesBelow<<<dimGrid, dimBlock>>>(
-			thrust::raw_pointer_cast(dBinCodes.data()), thrust::raw_pointer_cast(dProjectedQueries.data()),
-			binsNumber, Q, k,
-			thrust::raw_pointer_cast(concatenated.data())
-		);
+		thrust::copy_n(dBinCodes.begin(), binsNumber, concatenated.begin());
+		thrust::copy_n(queryHashes.begin(), Q, concatenated.begin() + binsNumber);
 
 		return concatenated;
 	}
