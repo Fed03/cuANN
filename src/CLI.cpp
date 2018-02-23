@@ -64,10 +64,11 @@ namespace cuANN {
 	void CLI::printResults(const std::vector<QueryResult>& results) {
 		for(const auto& result : results) {
 			std::cout << "Query idx: " << result.queryIdx << std::endl;
-			std::cout << "Result idx:" << std::endl;
+			std::cout << "Result idx" << std::endl;
 			for(const auto& id : result.resultIdx) {
-				std::cout << std::right << std::setw(8) << id << std::endl;
+				std::cout << std::right << std::setw(10) << id << std::endl;
 			}
+			std::cout << "==============" << std::endl;
 		}
 	}
 
